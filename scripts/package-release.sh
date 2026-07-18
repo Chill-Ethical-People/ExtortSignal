@@ -31,8 +31,9 @@ tar -czf "$OUTPUT_FILE" \
   --exclude='.DS_Store' \
   -C "$(dirname "$ROOT_DIR")" "$PROJECT_DIR"
 
+ARCHIVE_LIST="$(tar -tzf "$OUTPUT_FILE")"
 for required_file in .env.example LICENSE NOTICE SECURITY.md; do
-  tar -tzf "$OUTPUT_FILE" | grep -Fqx "$PROJECT_DIR/$required_file" || {
+  grep -Fqx "$PROJECT_DIR/$required_file" <<<"$ARCHIVE_LIST" || {
     printf 'Release validation failed: %s is missing.\n' "$required_file" >&2
     exit 1
   }
