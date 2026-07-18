@@ -1,0 +1,52 @@
+name: Snyk
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: snyk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Open Source dependencies
+    runs-on: ubuntu-latest
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+    steps:
+      - name: Require Snyk credential
+        if: env.SNYK_TOKEN == ''
+        run: |
+          echo 'SNYK_TOKEN is required for the repository Snyk status badge.' >&2
+          exit 1
+      - uses: actions/checkout@v7
+        if: env.SNYK_TOKEN != ''
+      - uses: actions/setup-python@v6
+        if: env.SNYK_TOKEN != ''
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v7
+        if: env.SNYK_TOKEN != ''
+        with:
+          node-version: 20
+      - name: Install scan dependencies
+        if: env.SNYK_TOKEN != ''
+        run: |
+          python -m pip install --upgrade 'pip>=26.1.2'
+          python -m pip install -r backend/requirements.txt
+          npm install --global pnpm@10.13.1 snyk@1.1306.1
+          pnpm --dir frontend install --frozen-lockfile
+      - name: Test Python dependencies
+        if: env.SNYK_TOKEN != ''
+        run: snyk test --file=backend/requirements.txt --package-manager=pip --command=python3 --severity-threshold=high --fail-on=all
+      - name: Test frontend dependencies
+        if: env.SNYK_TOKEN != ''
+        working-directory: frontend
+        run: snyk test --file=package.json --severity-threshold=high --fail-on=all

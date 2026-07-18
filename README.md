@@ -4,11 +4,14 @@
 
 <h1 align="center">ExtortSignal</h1>
 
-[![CI](../../actions/workflows/ci.yml/badge.svg)](../../actions/workflows/ci.yml)
-[![Security checks](../../actions/workflows/security.yml/badge.svg)](../../actions/workflows/security.yml)
-[![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
-[![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-3776AB.svg)](https://www.python.org/)
-[![React 19](https://img.shields.io/badge/React-19-61DAFB.svg)](https://react.dev/)
+<p align="center">
+  <a href="../../actions/workflows/ci.yml"><img alt="CI status" src="../../actions/workflows/ci.yml/badge.svg"></a>
+  <a href="../../actions/workflows/security.yml"><img alt="Security checks status" src="../../actions/workflows/security.yml/badge.svg"></a>
+  <a href="../../actions/workflows/snyk.yml"><img alt="Snyk status" src="../../actions/workflows/snyk.yml/badge.svg"></a>
+  <a href="LICENSE"><img alt="Apache-2.0 license" src="https://img.shields.io/badge/License-Apache--2.0-blue.svg"></a>
+  <a href="https://www.python.org/"><img alt="Python 3.11 or newer" src="https://img.shields.io/badge/Python-3.11%2B-3776AB.svg"></a>
+  <a href="https://react.dev/"><img alt="React 19" src="https://img.shields.io/badge/React-19-61DAFB.svg"></a>
+</p>
 
 ExtortSignal is a local-first, defensive monitor for public ransomware claims. It collects from public aggregators, stores original observations locally, matches claimed organizations against client profiles, and presents results in a non-technical web interface.
 
@@ -215,11 +218,11 @@ or the `CODEQL_PRIVATE_ENABLED=true` repository variable.
 
 ### Optional Snyk scanning
 
-The Security checks workflow also supports Snyk Open Source tests for the
-Python and frontend dependency trees. Add a repository Actions secret named
-`SNYK_TOKEN`, then run the **Security checks** workflow manually or push a
-change. High- and critical-severity fixable findings fail the Snyk job. If the
-secret is absent, the job explains that it is disabled and exits successfully.
+The dedicated Snyk workflow runs Snyk Open Source tests for the Python and
+frontend dependency trees. Add a repository Actions secret named `SNYK_TOKEN`,
+then run the **Snyk** workflow manually or push a change. High- and
+critical-severity fixable findings fail the workflow and its dedicated badge.
+The workflow also fails clearly if the credential is removed.
 
 Snyk does not currently support PEP 621 metadata for pip scans, so
 `backend/requirements.txt` is a runtime-only mirror of the dependencies in
