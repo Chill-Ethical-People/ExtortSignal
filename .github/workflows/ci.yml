@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend · Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+      - name: Install backend
+        run: python -m pip install -e './backend[dev]'
+      - name: Compile Python sources
+        run: python -m compileall -q backend/ransom_monitor
+      - name: Lint Python sources
+        run: python -m ruff check backend
+      - name: Run backend tests
+        run: python -m pytest backend/tests
+
+  frontend:
+    name: Frontend · Node 20
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install pnpm
+        run: npm install --global pnpm@10.13.1
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+      - name: Type-check and build frontend
+        working-directory: frontend
+        run: pnpm run build
+
+  release-hygiene:
+    name: Release hygiene
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate shell scripts
+        run: bash -n run.sh setup-kali.sh scripts/package-release.sh
+      - name: Build clean source archive
+        run: ./scripts/package-release.sh
+      - name: Reject private or generated files
+        run: |
+          if tar -tzf release/ExtortSignal-v*.tar.gz | grep -E '(^|/)(data|\.venv|node_modules|dist|release|\.git)(/|$)|(^|/)\.env$|\.sqlite3($|-)|secrets\.json|__pycache__|\.pytest_cache|\.ruff_cache|\.egg-info|\.tsbuildinfo'; then
+            echo 'Unsafe file found in release archive.' >&2
+            exit 1
+          fi

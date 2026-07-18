@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: "Geist";
+  src: local("Geist"), local("Geist Sans");
+  font-display: swap;
+}
+
+@theme {
+  --font-sans: "Geist", "Avenir Next", "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", "SFMono-Regular", Consolas, monospace;
+}
+
+@layer base {
+  * { box-sizing: border-box; }
+  html { background: #f5f7f6; }
+  body { margin: 0; min-width: 320px; min-height: 100dvh; font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+  button, input, select { font: inherit; }
+  button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid rgba(15, 118, 110, .28); outline-offset: 2px; }
+}
+
+@layer components {
+  .button-primary { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-teal-800 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-900 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60; }
+  .button-secondary { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-700 transition hover:border-zinc-300 hover:bg-zinc-50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60; }
+  .icon-button { @apply grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-zinc-200 bg-white text-zinc-600 transition hover:bg-zinc-100 active:scale-[0.98]; }
+  .filter-pill { @apply rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-600 transition hover:border-zinc-300 active:scale-[0.98]; }
+  .filter-pill-active { @apply border-zinc-900 bg-zinc-900 text-white; }
+  .input { @apply min-h-12 w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-teal-700 focus:ring-4 focus:ring-teal-700/10; }
+  select.input {
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    padding-right: 2.75rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 256 256'%3E%3Cpath fill='none' stroke='%2371717a' stroke-linecap='round' stroke-linejoin='round' stroke-width='24' d='m208 96-80 80-80-80'/%3E%3C/svg%3E");
+    background-position: right 1rem center;
+    background-repeat: no-repeat;
+    background-size: 1rem;
+  }
+  select.input:hover { @apply border-zinc-300 bg-zinc-50; }
+  select.input:disabled { @apply cursor-not-allowed bg-zinc-100 text-zinc-400 opacity-70; }
+  .eyebrow { @apply text-xs font-bold uppercase tracking-[0.14em] text-teal-800; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}

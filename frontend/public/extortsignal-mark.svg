@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">ExtortSignal mark</title>
+  <desc id="desc">Three teal signal bands meeting a dark boundary with an action notch.</desc>
+  <path fill="#0f766e" d="M6 10h35v9H6zm0 18h35v9H6zm0 18h35v9H6z"/>
+  <path fill="#18181b" fill-rule="evenodd" d="M45 8h11v48H45V39l8-6.5-8-6.5V8z"/>
+</svg>
