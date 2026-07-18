@@ -1,7 +1,11 @@
-# ExtortSignal
+<p align="center">
+  <img src="frontend/public/extortsignal-mark.svg" alt="ExtortSignal logo" width="104" height="104">
+</p>
+
+<h1 align="center">ExtortSignal</h1>
 
 [![CI](../../actions/workflows/ci.yml/badge.svg)](../../actions/workflows/ci.yml)
-[![CodeQL](../../actions/workflows/codeql.yml/badge.svg)](../../actions/workflows/codeql.yml)
+[![Security checks](../../actions/workflows/security.yml/badge.svg)](../../actions/workflows/security.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-3776AB.svg)](https://www.python.org/)
 [![React 19](https://img.shields.io/badge/React-19-61DAFB.svg)](https://react.dev/)
@@ -199,10 +203,15 @@ and security reports should follow [SECURITY.md](SECURITY.md).
 ## Repository quality checks
 
 GitHub Actions runs the Python test suite on Python 3.11 and 3.12, Ruff static
-analysis, frontend type-checking and production builds, shell syntax checks,
-and release-archive hygiene checks. CodeQL scans Python and TypeScript weekly
-and on changes. Dependency Review blocks newly introduced high-severity
-dependencies, while Dependabot proposes weekly Python, npm, and Actions updates.
+and security analysis, Python and npm dependency audits, frontend type-checking
+and production builds, shell syntax checks, and release-archive hygiene checks.
+Dependency Review blocks newly introduced high-severity dependencies, while
+Dependabot proposes weekly Python, npm, and Actions updates.
+
+CodeQL configuration is retained for public repositories and private
+repositories with GitHub Code Security. Because GitHub does not permit CodeQL
+on an unlicensed private repository, it is gated behind repository visibility
+or the `CODEQL_PRIVATE_ENABLED=true` repository variable.
 
 ## Brand assets
 

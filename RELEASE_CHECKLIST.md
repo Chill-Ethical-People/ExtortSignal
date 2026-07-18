@@ -12,7 +12,8 @@
 - [ ] Set the public repository URL and enable private security advisories.
 - [ ] Confirm a monitored security-reporting contact or process.
 - [ ] Enable secret scanning and push protection in the repository settings.
-- [ ] Protect `main` and require the CI and CodeQL checks before merging.
+- [ ] Protect `main` and require CI and Security checks before merging.
+- [ ] Require CodeQL too when the repository is public or GitHub Code Security is licensed.
 
 ## For every release
 

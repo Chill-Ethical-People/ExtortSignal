@@ -1061,11 +1061,10 @@ Regards,
         unique_ids = list(dict.fromkeys(target_ids))
         if not unique_ids:
             return {"requested": 0, "updated": 0, "capture_enabled": capture_enabled}
-        placeholders = ",".join("?" for _ in unique_ids)
         with self.database.connection() as connection:
-            result = connection.execute(
-                f"UPDATE dls_targets SET capture_enabled = ? WHERE id IN ({placeholders})",
-                (int(capture_enabled), *unique_ids),
+            result = connection.executemany(
+                "UPDATE dls_targets SET capture_enabled = ? WHERE id = ?",
+                [(int(capture_enabled), target_id) for target_id in unique_ids],
             )
         return {
             "requested": len(unique_ids),
