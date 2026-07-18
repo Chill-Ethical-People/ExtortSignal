@@ -61,6 +61,8 @@ jobs:
       - uses: actions/checkout@v7
       - name: Validate shell scripts
         run: bash -n run.sh setup-kali.sh scripts/package-release.sh
+      - name: Validate scanner dependency mirror
+        run: python3 scripts/check-dependency-mirror.py
       - name: Build clean source archive
         run: ./scripts/package-release.sh
       - name: Reject private or generated files

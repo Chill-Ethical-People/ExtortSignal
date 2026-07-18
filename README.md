@@ -213,6 +213,18 @@ repositories with GitHub Code Security. Because GitHub does not permit CodeQL
 on an unlicensed private repository, it is gated behind repository visibility
 or the `CODEQL_PRIVATE_ENABLED=true` repository variable.
 
+### Optional Snyk scanning
+
+The Security checks workflow also supports Snyk Open Source tests for the
+Python and frontend dependency trees. Add a repository Actions secret named
+`SNYK_TOKEN`, then run the **Security checks** workflow manually or push a
+change. High- and critical-severity fixable findings fail the Snyk job. If the
+secret is absent, the job explains that it is disabled and exits successfully.
+
+Snyk does not currently support PEP 621 metadata for pip scans, so
+`backend/requirements.txt` is a runtime-only mirror of the dependencies in
+`backend/pyproject.toml` and must be updated with it.
+
 ## Brand assets
 
 - `frontend/public/extortsignal-mark.svg` — primary application mark

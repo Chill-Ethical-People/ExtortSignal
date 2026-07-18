@@ -1,0 +1,6 @@
+# Runtime dependency mirror for security scanners that do not support PEP 621.
+# Keep this aligned with [project].dependencies in pyproject.toml.
+fastapi>=0.115,<1
+httpx>=0.27,<1
+pydantic>=2.8,<3
+uvicorn[standard]>=0.30,<1
