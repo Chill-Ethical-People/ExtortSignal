@@ -335,7 +335,7 @@ function AlertsPage({ alerts, onUpdated }: { alerts: Alert[]; onUpdated: () => P
   return (
     <div>
       <PageIntro eyebrow="Client protection" title="Alerts" description="Review public claims that matched a monitored client, domain, or known name." />
-      <div className="mt-7 grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(10rem,1fr))]">{(["new", "investigating", "client_notified", "monitoring", "resolved", "dismissed"] as AlertStatus[]).map((status) => <div key={status} className="min-w-0 rounded-2xl border border-zinc-200 bg-white p-4"><AlertStatusBadge status={status} /><p className="mt-3 font-mono text-2xl font-semibold">{statusCounts[status] || 0}</p></div>)}</div>
+      <div className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">{(["new", "investigating", "client_notified", "monitoring", "resolved", "dismissed"] as AlertStatus[]).map((status) => <div key={status} className="min-w-0 rounded-2xl border border-zinc-200 bg-white p-4"><AlertStatusBadge status={status} /><p className="mt-3 font-mono text-2xl font-semibold">{statusCounts[status] || 0}</p></div>)}</div>
       <div className="mt-7 flex flex-wrap gap-2" role="group" aria-label="Alert filters">
         {(["open", "all", "closed"] as const).map((value) => (
           <button key={value} type="button" onClick={() => setFilter(value)} className={`filter-pill ${filter === value ? "filter-pill-active" : ""}`}>{value === "open" ? "Open workflow" : value === "closed" ? "Closed" : "All alerts"}</button>
