@@ -173,7 +173,12 @@ if ((INSTALL_SERVICE)); then
     printf 'ExecStart=%s/run.sh\n' "$ROOT_DIR"
     printf '%s\n' 'Restart=on-failure' 'RestartSec=5' 'UMask=0077'
     printf '%s\n' 'NoNewPrivileges=true' 'PrivateTmp=true' 'PrivateDevices=true'
-    printf '%s\n' 'ProtectSystem=strict' 'ProtectHome=read-only'
+    printf '%s\n' 'CapabilityBoundingSet=' 'LockPersonality=true' 'MemoryDenyWriteExecute=true'
+    printf '%s\n' 'ProtectSystem=strict' 'ProtectHome=read-only' 'ProtectClock=true'
+    printf '%s\n' 'ProtectControlGroups=true' 'ProtectHostname=true' 'ProtectKernelLogs=true'
+    printf '%s\n' 'ProtectKernelModules=true' 'ProtectKernelTunables=true' 'ProtectProc=invisible'
+    printf '%s\n' 'ProcSubset=pid' 'RemoveIPC=true' 'RestrictNamespaces=true'
+    printf '%s\n' 'RestrictRealtime=true' 'RestrictSUIDSGID=true' 'SystemCallArchitectures=native'
     printf 'ReadWritePaths=%s/data\n' "$ROOT_DIR"
     printf '%s\n' 'RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6'
     printf '\n%s\n' '[Install]'

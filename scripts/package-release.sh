@@ -10,26 +10,23 @@ OUTPUT_DIR="$ROOT_DIR/release"
 OUTPUT_FILE="$OUTPUT_DIR/ExtortSignal-v${VERSION}.tar.gz"
 mkdir -p "$OUTPUT_DIR"
 
-tar -czf "$OUTPUT_FILE" \
-  --exclude="$PROJECT_DIR/.git" \
-  --exclude="$PROJECT_DIR/.env" \
-  --exclude="$PROJECT_DIR/.env.local" \
-  --exclude="$PROJECT_DIR/.venv" \
-  --exclude="$PROJECT_DIR/data" \
-  --exclude="$PROJECT_DIR/release" \
-  --exclude="$PROJECT_DIR/frontend/node_modules" \
-  --exclude="$PROJECT_DIR/frontend/dist" \
-  --exclude='*.sqlite3' \
-  --exclude='*.sqlite3-shm' \
-  --exclude='*.sqlite3-wal' \
-  --exclude='secrets.json' \
-  --exclude='__pycache__' \
-  --exclude='.pytest_cache' \
-  --exclude='.ruff_cache' \
-  --exclude='*.egg-info' \
-  --exclude='*.tsbuildinfo' \
-  --exclude='.DS_Store' \
-  -C "$(dirname "$ROOT_DIR")" "$PROJECT_DIR"
+# Prevent macOS metadata and extended-attribute headers from leaking into the
+# portable Linux release archive. GNU tar safely ignores this variable.
+export COPYFILE_DISABLE=1
+TAR_METADATA_OPTIONS=()
+if tar --version 2>/dev/null | grep -qi 'bsdtar'; then
+  TAR_METADATA_OPTIONS=(--no-xattrs --no-acls --no-fflags)
+fi
+
+# Package only version-controlled source. This makes accidental inclusion of
+# local databases, credentials, caches, or generated artifacts impossible.
+FILE_LIST="$(mktemp)"
+trap 'rm -f "$FILE_LIST"' EXIT
+git -C "$ROOT_DIR" ls-files | sed "s|^|$PROJECT_DIR/|" > "$FILE_LIST"
+
+tar "${TAR_METADATA_OPTIONS[@]}" -czf "$OUTPUT_FILE" \
+  -C "$(dirname "$ROOT_DIR")" \
+  -T "$FILE_LIST"
 
 ARCHIVE_LIST="$(tar -tzf "$OUTPUT_FILE")"
 for required_file in .env.example LICENSE NOTICE SECURITY.md; do
