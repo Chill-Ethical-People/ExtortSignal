@@ -28,7 +28,7 @@ jobs:
           exit 1
       - uses: actions/checkout@v7
         if: env.SNYK_TOKEN != ''
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         if: env.SNYK_TOKEN != ''
         with:
           python-version: "3.11"
