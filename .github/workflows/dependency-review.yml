@@ -8,6 +8,9 @@ permissions:
 
 jobs:
   review:
+    if: >-
+      github.event.repository.visibility == 'public' ||
+      vars.DEPENDENCY_REVIEW_PRIVATE_ENABLED == 'true'
     name: Review dependency changes
     runs-on: ubuntu-latest
     steps:

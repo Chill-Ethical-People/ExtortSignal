@@ -394,8 +394,11 @@ and security reports should follow [SECURITY.md](SECURITY.md).
 GitHub Actions runs the Python test suite on Python 3.11 and 3.12, Ruff static
 and security analysis, Python and npm dependency audits, frontend type-checking
 and production builds, shell syntax checks, and release-archive hygiene checks.
-Dependency Review blocks newly introduced high-severity dependencies, while
-Dependabot proposes weekly Python, npm, and Actions updates.
+Dependency Review blocks newly introduced high-severity dependencies when the
+repository is public or GitHub Code Security is licensed, while Dependabot
+proposes weekly Python, npm, and Actions updates. Set the
+`DEPENDENCY_REVIEW_PRIVATE_ENABLED=true` repository variable to enable it for a
+licensed private repository.
 
 CodeQL configuration is retained for public repositories and private
 repositories with GitHub Code Security. Because GitHub does not permit CodeQL

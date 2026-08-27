@@ -17,6 +17,8 @@
 - [ ] Enable secret scanning and push protection in the repository settings.
 - [ ] Protect `main` and require CI and Security checks before merging.
 - [ ] Require CodeQL too when the repository is public or GitHub Code Security is licensed.
+- [ ] Require Dependency Review when the repository is public or set
+      `DEPENDENCY_REVIEW_PRIVATE_ENABLED=true` when GitHub Code Security is licensed.
 - [ ] Configure `SNYK_TOKEN` if Snyk Open Source scanning is required.
 
 ## For every release
