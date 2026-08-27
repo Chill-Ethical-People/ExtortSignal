@@ -26,6 +26,7 @@ pnpm run build
 ```bash
 bash -n run.sh setup-kali.sh scripts/package-release.sh
 python3 scripts/check-dependency-mirror.py
+python3 scripts/public-release-audit.py --repository-only
 ./scripts/package-release.sh
 ```
 

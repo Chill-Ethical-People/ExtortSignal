@@ -8,32 +8,50 @@ VERSION="$(sed -n 's/^version = "\([^"]*\)"/\1/p' "$ROOT_DIR/backend/pyproject.t
 
 OUTPUT_DIR="$ROOT_DIR/release"
 OUTPUT_FILE="$OUTPUT_DIR/ExtortSignal-v${VERSION}.tar.gz"
+CHECKSUM_FILE="${OUTPUT_FILE}.sha256"
 mkdir -p "$OUTPUT_DIR"
 
-# Prevent macOS metadata and extended-attribute headers from leaking into the
-# portable Linux release archive. GNU tar safely ignores this variable.
-export COPYFILE_DISABLE=1
-TAR_METADATA_OPTIONS=()
-if tar --version 2>/dev/null | grep -qi 'bsdtar'; then
-  TAR_METADATA_OPTIONS=(--no-xattrs --no-acls --no-fflags)
+python3 "$ROOT_DIR/scripts/public-release-audit.py" --repository-only
+
+if [[ -n "$(git -C "$ROOT_DIR" status --porcelain --untracked-files=all)" ]]; then
+  printf '%s\n' \
+    'Release packaging requires a clean worktree.' \
+    'Commit or intentionally remove every modified and untracked file, then retry.' >&2
+  exit 1
 fi
 
-# Package only version-controlled source. This makes accidental inclusion of
-# local databases, credentials, caches, or generated artifacts impossible.
-FILE_LIST="$(mktemp)"
-trap 'rm -f "$FILE_LIST"' EXIT
-git -C "$ROOT_DIR" ls-files | sed "s|^|$PROJECT_DIR/|" > "$FILE_LIST"
-
-tar "${TAR_METADATA_OPTIONS[@]}" -czf "$OUTPUT_FILE" \
-  -C "$(dirname "$ROOT_DIR")" \
-  -T "$FILE_LIST"
+# Archive the committed tree rather than mutable working-tree content. This
+# prevents a release from importing an untracked module that the archive omitted.
+git -C "$ROOT_DIR" archive \
+  --format=tar.gz \
+  --prefix="$PROJECT_DIR/" \
+  --output="$OUTPUT_FILE" \
+  HEAD
 
 ARCHIVE_LIST="$(tar -tzf "$OUTPUT_FILE")"
-for required_file in .env.example LICENSE NOTICE SECURITY.md; do
+for required_file in .env.example DATA_SOURCES.md LICENSE NOTICE SECURITY.md run-capture-worker.sh; do
   grep -Fqx "$PROJECT_DIR/$required_file" <<<"$ARCHIVE_LIST" || {
     printf 'Release validation failed: %s is missing.\n' "$required_file" >&2
     exit 1
   }
 done
 
+if grep -E '(^|/)(data|\.venv|node_modules|dist|release|\.git)(/|$)|(^|/)\.env$|\.sqlite3($|-)|secrets\.json|__pycache__|\.pytest_cache|\.ruff_cache|\.egg-info|\.tsbuildinfo|\.(pem|p12|pfx)$' <<<"$ARCHIVE_LIST"; then
+  printf 'Release validation failed: private or generated content is present.\n' >&2
+  exit 1
+fi
+
+if command -v sha256sum >/dev/null 2>&1; then
+  (
+    cd "$OUTPUT_DIR"
+    sha256sum "$(basename "$OUTPUT_FILE")" > "$(basename "$CHECKSUM_FILE")"
+  )
+else
+  (
+    cd "$OUTPUT_DIR"
+    shasum -a 256 "$(basename "$OUTPUT_FILE")" > "$(basename "$CHECKSUM_FILE")"
+  )
+fi
+
 printf 'Created clean release archive: %s\n' "$OUTPUT_FILE"
+printf 'Created release checksum: %s\n' "$CHECKSUM_FILE"

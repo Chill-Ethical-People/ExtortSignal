@@ -238,22 +238,56 @@ def normalize_victim_enrichment(result: dict) -> dict:
     def text(value: Any, limit: int) -> str:
         return " ".join(str(value or "").split())[:limit]
 
+    def safe_url(value: Any, limit: int = 1000) -> str:
+        candidate = text(value, limit)
+        parsed = urlparse(candidate)
+        if (
+            parsed.scheme not in {"http", "https"}
+            or not parsed.hostname
+            or parsed.username
+            or parsed.password
+        ):
+            return ""
+        return candidate
+
     try:
         confidence = int(result.get("confidence", 0))
     except (TypeError, ValueError):
         confidence = 0
+    incidents = []
+    for item in result.get("past_incidents", []):
+        if not isinstance(item, dict):
+            continue
+        source_url = safe_url(item.get("source_url"))
+        summary = text(item.get("summary"), 500)
+        if not source_url or not summary:
+            continue
+        try:
+            incident_confidence = int(item.get("confidence", 0))
+        except (TypeError, ValueError):
+            incident_confidence = 0
+        incidents.append(
+            {
+                "published_at": text(item.get("published_at"), 40),
+                "incident_type": text(item.get("incident_type"), 120),
+                "summary": summary,
+                "source_url": source_url,
+                "confidence": max(0, min(100, incident_confidence)),
+            }
+        )
     return {
         "industry": text(result.get("industry"), 160),
         "country_or_region": text(result.get("country_or_region"), 120),
-        "brief_description": text(result.get("brief_description"), 600),
+        "brief_description": text(result.get("brief_description"), 4000),
         "organization_type": text(result.get("organization_type"), 120),
         "confidence": max(0, min(100, confidence)),
         "rationale": text(result.get("rationale"), 300),
         "source_urls": [
-            text(item, 500)
+            sanitized
             for item in result.get("source_urls", [])
-            if text(item, 500)
+            if (sanitized := safe_url(item, 1000))
         ][:3],
+        "past_incidents": incidents[:5],
     }
 
 

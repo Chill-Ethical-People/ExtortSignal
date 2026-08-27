@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+- Replace mandatory first-client onboarding with a reusable product tour that
+  explains the workspaces, Passive/Active safety boundaries, and analyst flow.
+- Reconcile ransomware.live and RansomLook clear-web DLS catalogues for
+  recently active actors, preserving cross-source provenance and partial-sync
+  failures without contacting listed onion hosts.
+- Document upstream data attribution and redistribution limitations.
+- Add repeatable public-release sanitization and repository/runtime privacy audits.
+- Add a scoped release reset for AI/capture job history, AI-generated analyses,
+  custom settings, DLS allowlists, and AI/SMTP credentials while optionally
+  retaining operator records, plus a contributor map for safe DLS profiles.
+- Force SQLite database and sidecar files to user-only permissions outside systemd.
+- Document confidentiality, integrity, availability, backup, and release-gate controls.
+
 ## 0.1.0 — 2026-07-18
 
 First public-beta candidate of ExtortSignal.

@@ -124,3 +124,23 @@ def test_normalize_victim_enrichment_handles_invalid_confidence():
     )
     assert result["industry"] == "Technology"
     assert result["confidence"] == 0
+
+
+def test_normalize_victim_enrichment_bounds_incident_candidates():
+    result = normalize_victim_enrichment(
+        {
+            "past_incidents": [
+                {
+                    "published_at": "2026-01-02T03:04:05+00:00",
+                    "incident_type": "Data breach",
+                    "summary": "A publication reported a prior incident.",
+                    "source_url": "https://news.example/report",
+                    "confidence": 81,
+                },
+                {"summary": "Missing evidence URL"},
+            ]
+        }
+    )
+
+    assert len(result["past_incidents"]) == 1
+    assert result["past_incidents"][0]["confidence"] == 81

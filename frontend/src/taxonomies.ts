@@ -22,6 +22,64 @@ export const COUNTRY_OPTIONS = COUNTRY_CODES.map((code) => ({
   name: DISPLAY_OVERRIDES[code] || names.of(code) || code
 })).sort((left, right) => left.name.localeCompare(right.name));
 
+export const HONG_KONG_REGION_OPTIONS = [
+  "Hong Kong Island",
+  "Kowloon",
+  "New Territories",
+  "Central and Western District, Hong Kong",
+  "Eastern District, Hong Kong",
+  "Southern District, Hong Kong",
+  "Wan Chai District, Hong Kong",
+  "Kowloon City District, Hong Kong",
+  "Kwun Tong District, Hong Kong",
+  "Sham Shui Po District, Hong Kong",
+  "Wong Tai Sin District, Hong Kong",
+  "Yau Tsim Mong District, Hong Kong",
+  "Islands District, Hong Kong",
+  "Kwai Tsing District, Hong Kong",
+  "North District, Hong Kong",
+  "Sai Kung District, Hong Kong",
+  "Sha Tin District, Hong Kong",
+  "Tai Po District, Hong Kong",
+  "Tsuen Wan District, Hong Kong",
+  "Tuen Mun District, Hong Kong",
+  "Yuen Long District, Hong Kong"
+] as const;
+
+export const SINGAPORE_REGION_OPTIONS = [
+  "Central Region, Singapore",
+  "East Region, Singapore",
+  "North Region, Singapore",
+  "North-East Region, Singapore",
+  "West Region, Singapore",
+  "Ang Mo Kio, Singapore", "Bedok, Singapore", "Bishan, Singapore",
+  "Boon Lay, Singapore", "Bukit Batok, Singapore", "Bukit Merah, Singapore",
+  "Bukit Panjang, Singapore", "Bukit Timah, Singapore", "Central Water Catchment, Singapore",
+  "Changi, Singapore", "Changi Bay, Singapore", "Choa Chu Kang, Singapore",
+  "Clementi, Singapore", "Downtown Core, Singapore", "Geylang, Singapore",
+  "Hougang, Singapore", "Jurong East, Singapore", "Jurong West, Singapore",
+  "Kallang, Singapore", "Lim Chu Kang, Singapore", "Mandai, Singapore",
+  "Marina East, Singapore", "Marina South, Singapore", "Marine Parade, Singapore",
+  "Museum, Singapore", "Newton, Singapore", "North-Eastern Islands, Singapore",
+  "Novena, Singapore", "Orchard, Singapore", "Outram, Singapore",
+  "Pasir Ris, Singapore", "Paya Lebar, Singapore", "Pioneer, Singapore",
+  "Punggol, Singapore", "Queenstown, Singapore", "River Valley, Singapore",
+  "Rochor, Singapore", "Seletar, Singapore", "Sembawang, Singapore",
+  "Sengkang, Singapore", "Serangoon, Singapore", "Simpang, Singapore",
+  "Singapore River, Singapore", "Southern Islands, Singapore", "Straits View, Singapore",
+  "Sungei Kadut, Singapore", "Tampines, Singapore", "Tanglin, Singapore",
+  "Tengah, Singapore", "Toa Payoh, Singapore", "Tuas, Singapore",
+  "Western Islands, Singapore", "Western Water Catchment, Singapore",
+  "Woodlands, Singapore", "Yishun, Singapore"
+] as const;
+
+export const GEOGRAPHY_OPTIONS = [
+  ...COUNTRY_OPTIONS.map((country) => country.name),
+  ...HONG_KONG_REGION_OPTIONS,
+  ...SINGAPORE_REGION_OPTIONS
+].filter((value, index, values) => values.indexOf(value) === index)
+  .sort((left, right) => left.localeCompare(right));
+
 export const INDUSTRY_OPTIONS = [
   "Aerospace and defense",
   "Agriculture",
@@ -29,6 +87,7 @@ export const INDUSTRY_OPTIONS = [
   "Business services",
   "Construction",
   "Consumer services",
+  "Critical Infrastructure",
   "Education",
   "Energy",
   "Financial services",

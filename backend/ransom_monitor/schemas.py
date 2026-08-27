@@ -2,8 +2,11 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import Literal
+from urllib.parse import urlsplit
 
 from pydantic import BaseModel, Field, SecretStr, field_validator, model_validator
+
+from .source_metadata import normalize_leak_size
 
 
 def utc_now() -> datetime:
@@ -96,12 +99,53 @@ class ClaimInput(BaseModel):
     description: str = ""
     published_at: datetime | None = None
     discovered_at: datetime | None = None
+    attack_date: datetime | None = None
     country: str = ""
     industry: str = ""
     domains: list[str] = Field(default_factory=list)
     publication_status: str = Field(default="claimed", max_length=40)
     leak_size: str = Field(default="", max_length=120)
+    leak_size_bytes: int | None = Field(default=None, ge=0)
+    leak_size_source: str = Field(default="", max_length=80)
+    source_screenshot_url: str = Field(default="", max_length=2000)
+    source_tags: list[str] = Field(default_factory=list, max_length=30)
+    detail_checked_at: datetime | None = None
+    detail_status: str = Field(default="not_checked", max_length=40)
     raw: dict = Field(default_factory=dict)
+
+    @field_validator("source_url", "source_screenshot_url")
+    @classmethod
+    def clean_source_url(cls, value: str) -> str:
+        candidate = value.strip()[:2000]
+        if not candidate:
+            return ""
+        parsed = urlsplit(candidate)
+        if (
+            parsed.scheme not in {"http", "https"}
+            or not parsed.hostname
+            or parsed.username
+            or parsed.password
+        ):
+            return ""
+        return candidate
+
+    @field_validator("source_tags")
+    @classmethod
+    def clean_source_tags(cls, values: list[str]) -> list[str]:
+        cleaned = [" ".join(str(value).split())[:80] for value in values if str(value).strip()]
+        return list(dict.fromkeys(cleaned))
+
+    @model_validator(mode="after")
+    def normalize_source_metadata(self):
+        parsed = normalize_leak_size(self.leak_size, source=self.leak_size_source)
+        if parsed is not None:
+            self.leak_size = parsed.raw
+            if self.leak_size_bytes is None:
+                self.leak_size_bytes = parsed.bytes
+        if not self.leak_size:
+            self.leak_size_bytes = None
+            self.leak_size_source = ""
+        return self
 
 
 class Claim(ClaimInput):
@@ -127,9 +171,7 @@ class Alert(BaseModel):
 
 class SourceHealth(BaseModel):
     source: str
-    status: Literal[
-        "working", "delayed", "unavailable", "not_checked", "needs_configuration"
-    ]
+    status: Literal["working", "delayed", "unavailable", "not_checked", "needs_configuration"]
     last_checked_at: datetime | None = None
     last_success_at: datetime | None = None
     latest_record_at: datetime | None = None
@@ -145,6 +187,9 @@ class DashboardSummary(BaseModel):
     new_alerts: list[dict]
     recent_claims: list[dict]
     sources: list[SourceHealth]
+    focus_regions: list[str] = Field(default_factory=list)
+    daily_focus_count: int = 0
+    daily_focus_victims: list[dict] = Field(default_factory=list)
     generated_at: datetime = Field(default_factory=utc_now)
 
 
@@ -153,6 +198,60 @@ class AlertUpdate(BaseModel):
         "new", "investigating", "client_notified", "monitoring", "resolved", "dismissed"
     ]
     note: str = Field(default="", max_length=500)
+
+
+class BulkAlertUpdate(BaseModel):
+    alert_ids: list[str] = Field(min_length=1, max_length=1000)
+    status: Literal[
+        "new", "investigating", "client_notified", "monitoring", "resolved", "dismissed"
+    ]
+    note: str = Field(default="", max_length=500)
+
+    @field_validator("alert_ids")
+    @classmethod
+    def clean_alert_ids(cls, values: list[str]) -> list[str]:
+        cleaned = list(dict.fromkeys(value.strip() for value in values if value.strip()))
+        if not cleaned:
+            raise ValueError("Select at least one alert")
+        return cleaned
+
+
+class NotificationDraftUpdate(BaseModel):
+    subject: str = Field(min_length=1, max_length=300)
+    body: str = Field(min_length=1, max_length=20_000)
+
+    @field_validator("subject", "body")
+    @classmethod
+    def clean_draft_text(cls, value: str) -> str:
+        return value.strip()
+
+
+class FalsePositiveFeedbackCreate(BaseModel):
+    category: Literal[
+        "unrelated_organization",
+        "ambiguous_name",
+        "stale_or_duplicate",
+        "incorrect_context",
+        "other",
+    ] = "unrelated_organization"
+    analyst_note: str = Field(default="", max_length=2000)
+
+    @field_validator("analyst_note")
+    @classmethod
+    def clean_feedback_note(cls, value: str) -> str:
+        return " ".join(value.split())
+
+
+class BulkFalsePositiveFeedbackCreate(FalsePositiveFeedbackCreate):
+    alert_ids: list[str] = Field(min_length=1, max_length=100)
+
+    @field_validator("alert_ids")
+    @classmethod
+    def clean_alert_ids(cls, values: list[str]) -> list[str]:
+        cleaned = list(dict.fromkeys(value.strip() for value in values if value.strip()))
+        if not cleaned:
+            raise ValueError("Select at least one alert")
+        return cleaned
 
 
 class DlsLocationInput(BaseModel):
@@ -181,6 +280,83 @@ class DlsBulkTargetUpdate(BaseModel):
         return list(dict.fromkeys(cleaned))
 
 
+class CaptureJobCleanupRequest(BaseModel):
+    statuses: list[Literal["queued", "failed"]] = Field(min_length=1, max_length=2)
+
+    @field_validator("statuses")
+    @classmethod
+    def clean_statuses(
+        cls, values: list[Literal["queued", "failed"]]
+    ) -> list[Literal["queued", "failed"]]:
+        return list(dict.fromkeys(values))
+
+
+class CaptureWorkerCompletion(BaseModel):
+    screenshot_path: str = Field(min_length=1, max_length=500)
+    screenshot_paths: list[str] = Field(min_length=1, max_length=200)
+    text_path: str = Field(default="", max_length=500)
+    content_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
+    text_sha256: str = Field(default="", pattern=r"^(?:[a-f0-9]{64})?$")
+    extraction_method: str = Field(default="", max_length=40)
+    duplicate_of_job_id: str = Field(default="", max_length=80)
+    detected_statuses: list[str] = Field(default_factory=list, max_length=20)
+    status_changed: bool = False
+    added_line_count: int = Field(default=0, ge=0, le=1_000_000)
+    removed_line_count: int = Field(default=0, ge=0, le=1_000_000)
+    scroll_count: int = Field(default=0, ge=0, le=10_000)
+    page_height: int = Field(default=0, ge=0, le=1_000_000)
+    capture_truncated: bool = False
+    coverage_status: str = Field(default="not_measured", max_length=40)
+    anchor_lines: list[str] = Field(default_factory=list, max_length=100)
+    continuity_status: str = Field(default="no_baseline", max_length=40)
+    continuity_anchor: str = Field(default="", max_length=240)
+    continuity_page: int = Field(default=0, ge=0, le=1_000)
+    pagination_detected: bool = False
+    more_content_suspected: bool = False
+    css_blur_element_count: int = Field(default=0, ge=0, le=100_000)
+    victim_match_found: bool = False
+    opsec_status: Literal["passed", "failed", "not_checked"] = "not_checked"
+    tor_preflight_passed: bool = False
+    blocked_request_count: int = Field(default=0, ge=0, le=1_000_000)
+    blocked_popup_count: int = Field(default=0, ge=0, le=100_000)
+    blocked_download_count: int = Field(default=0, ge=0, le=100_000)
+    opsec_controls: list[str] = Field(default_factory=list, max_length=50)
+
+    @field_validator(
+        "screenshot_path",
+        "text_path",
+        "extraction_method",
+        "coverage_status",
+        "continuity_status",
+        "continuity_anchor",
+        "duplicate_of_job_id",
+    )
+    @classmethod
+    def clean_capture_text(cls, value: str) -> str:
+        return value.strip()
+
+    @field_validator("screenshot_paths", "detected_statuses", "anchor_lines", "opsec_controls")
+    @classmethod
+    def clean_capture_lists(cls, values: list[str]) -> list[str]:
+        cleaned = [" ".join(value.split()) for value in values if value.strip()]
+        return list(dict.fromkeys(cleaned))
+
+
+class CaptureWorkerFailure(BaseModel):
+    error: str = Field(min_length=1, max_length=500)
+    opsec_status: Literal["passed", "failed", "not_checked"] = "not_checked"
+    tor_preflight_passed: bool = False
+    blocked_request_count: int = Field(default=0, ge=0, le=1_000_000)
+    blocked_popup_count: int = Field(default=0, ge=0, le=100_000)
+    blocked_download_count: int = Field(default=0, ge=0, le=100_000)
+    opsec_controls: list[str] = Field(default_factory=list, max_length=50)
+
+    @field_validator("error")
+    @classmethod
+    def clean_error(cls, value: str) -> str:
+        return " ".join(value.split())
+
+
 class AIProviderCredentialUpdate(BaseModel):
     api_key: SecretStr
 
@@ -203,6 +379,24 @@ class SMTPPasswordUpdate(BaseModel):
 
 class BulkVictimEnrichmentRequest(BaseModel):
     limit: int = Field(default=25, ge=1, le=100)
+    claim_ids: list[str] = Field(default_factory=list, max_length=100)
+
+
+class AIJobRequest(BaseModel):
+    job_type: Literal[
+        "intelligence_analysis",
+        "actor_analysis",
+        "actor_profile_refresh",
+        "victim_enrichment",
+        "bulk_victim_enrichment",
+        "alert_assessment",
+        "bulk_alert_assessment",
+        "alert_notification_draft",
+        "claim_awareness_draft",
+        "provider_test",
+        "victim_digest",
+    ]
+    payload: dict = Field(default_factory=dict)
 
 
 class RuntimeSettingsUpdate(BaseModel):
@@ -211,6 +405,11 @@ class RuntimeSettingsUpdate(BaseModel):
     public_interval_minutes: int = Field(default=2, ge=1, le=1440)
     catalog_interval_hours: int = Field(default=6, ge=1, le=168)
     active_interval_minutes: int = Field(default=30, ge=5, le=1440)
+    capture_max_scrolls: int = Field(default=60, ge=10, le=200)
+    capture_stable_passes: int = Field(default=3, ge=2, le=8)
+    capture_scroll_delay_ms: int = Field(default=1000, ge=250, le=5000)
+    capture_max_page_height: int = Field(default=50000, ge=5000, le=100000)
+    capture_segment_height: int = Field(default=1400, ge=800, le=2400)
     ai_enabled: bool = False
     ai_provider: str = Field(default="ollama", min_length=2, max_length=80)
     ai_model: str = Field(default="qwen3:4b", max_length=160)
@@ -225,7 +424,9 @@ class RuntimeSettingsUpdate(BaseModel):
     smtp_username: str = Field(default="", max_length=320)
     smtp_from: str = Field(default="", max_length=320)
 
-    @field_validator("ai_provider", "ai_model", "ai_base_url", "smtp_host", "smtp_username", "smtp_from")
+    @field_validator(
+        "ai_provider", "ai_model", "ai_base_url", "smtp_host", "smtp_username", "smtp_from"
+    )
     @classmethod
     def clean_runtime_text(cls, value: str) -> str:
         return value.strip()

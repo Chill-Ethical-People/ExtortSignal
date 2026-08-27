@@ -60,9 +60,11 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Validate shell scripts
-        run: bash -n run.sh setup-kali.sh scripts/package-release.sh
+        run: bash -n run.sh run-capture-worker.sh setup-kali.sh scripts/package-release.sh
       - name: Validate scanner dependency mirror
         run: python3 scripts/check-dependency-mirror.py
+      - name: Audit public-release source hygiene
+        run: python3 scripts/public-release-audit.py --repository-only
       - name: Build clean source archive
         run: ./scripts/package-release.sh
       - name: Reject private or generated files

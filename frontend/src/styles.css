@@ -1,5 +1,41 @@
 @import "tailwindcss";
 
+@keyframes operation-toast-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(14px, -6px, 0) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.operation-toast-enter {
+  animation: operation-toast-enter 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+  transition:
+    opacity 260ms ease,
+    transform 260ms cubic-bezier(0.4, 0, 1, 1);
+}
+
+.operation-toast-exit {
+  opacity: 0;
+  transform: translate3d(16px, 0, 0) scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .operation-toast-enter {
+    animation: none;
+    transition: opacity 1ms linear;
+  }
+
+  .operation-toast-exit {
+    transform: none;
+  }
+}
+
 @font-face {
   font-family: "Geist";
   src: local("Geist"), local("Geist Sans");
@@ -13,19 +49,22 @@
 
 @layer base {
   * { box-sizing: border-box; }
-  html { background: #f5f7f6; }
-  body { margin: 0; min-width: 320px; min-height: 100dvh; font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
-  button, input, select { font: inherit; }
-  button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid rgba(15, 118, 110, .28); outline-offset: 2px; }
+  html { min-height: 100%; background: #f5f7f6; }
+  body { margin: 0; min-width: 320px; min-height: 100dvh; color: #27272a; font-family: var(--font-sans); line-height: 1.5; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; }
+  #root { min-height: 100dvh; }
+  button, input, select, textarea { font: inherit; }
+  button { cursor: pointer; }
+  button:disabled { cursor: not-allowed; }
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid rgba(15, 118, 110, .28); outline-offset: 2px; }
 }
 
 @layer components {
-  .button-primary { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-teal-800 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-900 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60; }
-  .button-secondary { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-700 transition hover:border-zinc-300 hover:bg-zinc-50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60; }
+  .button-primary { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-teal-800 px-4 py-2.5 text-sm font-medium leading-5 text-white transition-colors duration-200 hover:bg-teal-900 active:bg-teal-950 disabled:cursor-not-allowed disabled:opacity-60; }
+  .button-secondary { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium leading-5 text-zinc-700 transition-colors duration-200 hover:border-zinc-300 hover:bg-zinc-50 active:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-60; }
   .icon-button { @apply grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-zinc-200 bg-white text-zinc-600 transition hover:bg-zinc-100 active:scale-[0.98]; }
-  .filter-pill { @apply rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-600 transition hover:border-zinc-300 active:scale-[0.98]; }
+  .filter-pill { @apply inline-flex min-h-10 items-center justify-center rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm font-medium leading-5 text-zinc-600 transition-colors duration-200 hover:border-zinc-300 hover:bg-zinc-50; }
   .filter-pill-active { @apply border-zinc-900 bg-zinc-900 text-white; }
-  .input { @apply min-h-12 w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-teal-700 focus:ring-4 focus:ring-teal-700/10; }
+  .input { @apply min-h-11 w-full rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm leading-5 text-zinc-900 outline-none transition-colors duration-200 placeholder:text-zinc-400 focus:border-teal-700 focus:ring-4 focus:ring-teal-700/10; }
   select.input {
     appearance: none;
     -webkit-appearance: none;
@@ -38,7 +77,80 @@
   }
   select.input:hover { @apply border-zinc-300 bg-zinc-50; }
   select.input:disabled { @apply cursor-not-allowed bg-zinc-100 text-zinc-400 opacity-70; }
-  .eyebrow { @apply text-xs font-bold uppercase tracking-[0.14em] text-teal-800; }
+  .eyebrow { @apply text-xs font-medium uppercase tracking-[0.12em] text-teal-800; }
+
+  /* Compact controls get tactile depth without compositing full page surfaces. */
+  .button-primary:not(:disabled),
+  .button-secondary:not(:disabled),
+  .icon-button:not(:disabled),
+  .filter-pill:not(:disabled) {
+    transition-property: color, background-color, border-color, box-shadow, transform;
+    transition-duration: 220ms;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .button-primary:not(:disabled):hover,
+  .button-secondary:not(:disabled):hover,
+  .icon-button:not(:disabled):hover,
+  .filter-pill:not(:disabled):hover {
+    transform: translate3d(0, -1px, 0);
+  }
+
+  .button-primary:not(:disabled):active,
+  .button-secondary:not(:disabled):active,
+  .icon-button:not(:disabled):active,
+  .filter-pill:not(:disabled):active {
+    transform: translate3d(0, 0, 0) scale(0.98);
+  }
+}
+
+@layer utilities {
+  /* The console uses size, spacing, and colour for hierarchy instead of heavy type. */
+  .font-bold,
+  .font-semibold { font-weight: 500 !important; }
+  [aria-label="AI task notifications"] { z-index: 25 !important; }
+
+  /*
+   * Keep route content on Chromium's normal document-paint path. A transform on
+   * this large surface can corrupt glyph tiles on some virtualized Linux GPUs.
+   * Motion remains available for compact controls, notices, and dialogs.
+   */
+  .app-page-surface {
+    min-width: 0;
+    transform: none;
+    filter: none;
+    backface-visibility: visible;
+  }
+
+  /*
+   * Cards gain depth through paint-only properties. Avoiding a persistent
+   * transform here keeps text on Chromium's normal raster path in Linux VMs.
+   */
+  .dashboard-card-motion {
+    transition:
+      border-color 240ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 240ms cubic-bezier(0.22, 1, 0.36, 1),
+      background-color 240ms ease;
+  }
+
+  .dashboard-motion-surface [data-dashboard-row] {
+    transition:
+      background-color 180ms ease,
+      border-color 180ms ease,
+      transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .dashboard-card-motion:hover {
+      border-color: rgba(15, 118, 110, 0.22);
+      box-shadow: 0 20px 42px -34px rgba(15, 118, 110, 0.42);
+    }
+
+    .dashboard-motion-surface [data-dashboard-row]:hover {
+      transform: translate3d(2px, 0, 0);
+    }
+  }
+
 }
 
 @media (prefers-reduced-motion: reduce) {
