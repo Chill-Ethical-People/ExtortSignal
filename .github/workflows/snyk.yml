@@ -3,6 +3,8 @@ name: Snyk
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   schedule:
     - cron: "17 4 * * 1"
   workflow_dispatch:
@@ -45,8 +47,8 @@ jobs:
           pnpm --dir frontend install --frozen-lockfile
       - name: Test Python dependencies
         if: env.SNYK_TOKEN != ''
-        run: snyk test --file=backend/requirements.txt --package-manager=pip --command=python3 --severity-threshold=high --fail-on=all
+        run: snyk test --file=backend/requirements.txt --package-manager=pip --command=python3 --severity-threshold=low --fail-on=all
       - name: Test frontend dependencies
         if: env.SNYK_TOKEN != ''
         working-directory: frontend
-        run: snyk test --file=package.json --severity-threshold=high --fail-on=all
+        run: snyk test --file=package.json --severity-threshold=low --fail-on=all
