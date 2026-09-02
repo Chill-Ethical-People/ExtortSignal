@@ -1505,6 +1505,7 @@ def test_flexible_intelligence_analysis_context_supports_multiple_scopes(tmp_pat
 
 def test_intelligence_calculates_growth_and_monitored_geographies(tmp_path):
     service = build_service(tmp_path)
+    reference = utc_now()
     service.create_client(
         ClientCreate(
             canonical_name="Harbour Client",
@@ -1520,7 +1521,7 @@ def test_intelligence_calculates_growth_and_monitored_geographies(tmp_path):
             threat_actor="Qilin",
             title="Previous victim",
             country="Hong Kong",
-            discovered_at=utc_now() - timedelta(days=45),
+            discovered_at=reference - timedelta(days=45),
         )
     )
     for index in range(2):
@@ -1531,10 +1532,10 @@ def test_intelligence_calculates_growth_and_monitored_geographies(tmp_path):
                 threat_actor="Qilin",
                 title=f"Current victim {index}",
                 country="Hong Kong",
-                discovered_at=utc_now() - timedelta(days=index + 1),
-                    # Keep both fixtures in the current calendar month. Using
-                    # only discovered_at made this test fail near month boundaries.
-                    attack_date=utc_now(),
+                # Monthly trend is calendar-based, so use the same current-month
+                # observation time even when CI runs near a month boundary.
+                discovered_at=reference,
+                attack_date=reference if index == 0 else None,
             )
         )
 
