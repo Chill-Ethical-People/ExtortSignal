@@ -20,6 +20,16 @@ process. RansomLook metadata is requested only for actors observed locally in a
 bounded recent-activity window. Actual screenshot capture remains an optional,
 separate, allowlisted Kali worker operation.
 
+## Operator-supplied DLS targets
+
+The bundled catalogue includes `fulcrumsec.vg` as an operator-supplied
+clear-web victim-list endpoint for the FulcrumSec label. ExtortSignal does not
+contact this host during catalogue synchronization. Direct capture remains
+disabled until an analyst explicitly allows the target, and the isolated Kali
+worker routes the exact-host, read-only capture through its required local Tor
+proxy. The entry's attribution and availability are not independently
+verified by ExtortSignal.
+
 Runtime observations, screenshots, client profiles and derived databases are
 not included in source releases. Anyone operating ExtortSignal is responsible
 for reviewing provider terms, applicable database rights, privacy obligations,

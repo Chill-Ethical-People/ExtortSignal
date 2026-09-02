@@ -20,6 +20,7 @@ from .collectors import (
     RansomLookCollector,
     RansomwareLiveCollector,
     RansomwareLiveCatalogCollector,
+    operator_dls_catalog,
     reconcile_dls_catalogs,
 )
 from .config import get_settings
@@ -519,6 +520,13 @@ async def sync_catalog() -> dict:
             _, message = collection_failure(supplementary.name, error)
             gaps.append(f"RansomLook catalogue: {message}")
 
+        operator_locations = operator_dls_catalog()
+        catalogues.append(operator_locations)
+        reports["operator_static"] = {
+            "accepted": len(operator_locations),
+            "network_requests": 0,
+        }
+
         if not catalogues:
             service.mark_source(
                 primary.name,
@@ -539,7 +547,7 @@ async def sync_catalog() -> dict:
             status="working" if complete else "delayed",
             message=(
                 f"Catalog synchronized from {len(catalogues)} clear-web source(s); "
-                f"{len(locations)} unique public Tor v3 DLS locations tracked"
+                f"{len(locations)} unique public DLS locations tracked"
             ),
             received=created,
             coverage_status=coverage,
