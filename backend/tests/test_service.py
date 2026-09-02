@@ -1532,7 +1532,9 @@ def test_intelligence_calculates_growth_and_monitored_geographies(tmp_path):
                 title=f"Current victim {index}",
                 country="Hong Kong",
                 discovered_at=utc_now() - timedelta(days=index + 1),
-                attack_date=utc_now() if index == 0 else None,
+                    # Keep both fixtures in the current calendar month. Using
+                    # only discovered_at made this test fail near month boundaries.
+                    attack_date=utc_now(),
             )
         )
 
