@@ -21,6 +21,7 @@ from ransom_monitor.capture_worker import (
     navigate_to_capture_target,
     scroll_until_stable,
     tor_socks_preflight,
+    validate_capture_host,
     validate_onion_host,
     validate_tor_proxy,
     wait_for_site_ready,
@@ -62,6 +63,20 @@ def test_browser_user_agent_matches_chromium_without_headless_marker():
 
     with pytest.raises(ValueError):
         chromium_user_agent("unknown")
+
+
+def test_capture_host_allowlist_accepts_fulcrumsec_without_broadening_clearnet_access():
+    assert validate_capture_host("FULCRUMSEC.VG.") == "fulcrumsec.vg"
+    assert validate_capture_host(f"{'a' * 56}.onion") == f"{'a' * 56}.onion"
+
+    for host in (
+        "example.com",
+        "www.fulcrumsec.vg",
+        "127.0.0.1",
+        "fulcrumsec.vg.evil.test",
+    ):
+        with pytest.raises(ValueError):
+            validate_capture_host(host)
 
 
 def test_actor_specific_capture_profiles_are_bounded_and_read_only():

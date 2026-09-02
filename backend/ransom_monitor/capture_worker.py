@@ -25,10 +25,11 @@ LOGGER = logging.getLogger(__name__)
 
 
 ONION_HOST = re.compile(r"^(?:[a-z2-7]{16}|[a-z2-7]{56})\.onion$")
+OPERATOR_CLEARNET_CAPTURE_HOSTS = frozenset({"fulcrumsec.vg"})
 LOOPBACK_PROXY_HOSTS = {"127.0.0.1", "localhost", "::1"}
 OPSEC_CONTROLS = (
     "loopback_tor_socks_preflight",
-    "same_onion_request_isolation",
+    "exact_target_request_isolation",
     "websockets_blocked",
     "browser_dns_fail_closed",
     "webrtc_non_proxied_udp_disabled",
@@ -212,6 +213,18 @@ CAPTURE_SITE_PROFILES: dict[str, dict[str, object]] = {
         "stop_before_heading": "contact",
         "max_pagination_pages": 1,
     },
+    "fulcrumsec": {
+        "navigation_attempts": 2,
+        "navigation_retry_delay_ms": 5_000,
+        "ready_timeout_ms": 45_000,
+        "min_body_chars": 120,
+        "candidate_selector": (
+            "article, [class*='victim' i], [class*='company' i], "
+            "[class*='card' i], table tbody tr"
+        ),
+        "min_candidate_count": 1,
+        "reject_if_not_ready": True,
+    },
 }
 
 
@@ -249,6 +262,17 @@ def validate_onion_host(fqdn: str) -> str:
     if not ONION_HOST.fullmatch(host):
         raise ValueError("Capture blocked: the catalog target is not a valid onion hostname")
     return host
+
+
+def validate_capture_host(fqdn: str) -> str:
+    """Allow Tor hosts plus a narrow reviewed clear-web capture allowlist."""
+    host = fqdn.strip().lower().rstrip(".")
+    if ONION_HOST.fullmatch(host) or host in OPERATOR_CLEARNET_CAPTURE_HOSTS:
+        return host
+    raise ValueError(
+        "Capture blocked: target is neither a valid onion hostname nor an "
+        "operator-approved clear-web DLS hostname"
+    )
 
 
 def validate_tor_proxy(proxy: str) -> tuple[str, int]:
@@ -299,7 +323,7 @@ async def tor_socks_preflight(proxy: str, timeout_seconds: float = 5.0) -> None:
 
 
 def request_allowed_for_target(url: str, target_host: str, method: str = "GET") -> bool:
-    """Restrict browser traffic to the exact allowlisted onion origin."""
+    """Restrict browser traffic to the exact allowlisted target origin."""
     parsed = urlparse(url)
     if parsed.scheme in {"data", "blob", "about"}:
         return method.upper() in {"GET", "HEAD"}
@@ -1251,7 +1275,7 @@ async def run_capture_job(
         previous["text"], ignored_values=[str(job["group_name"])]
     )
     try:
-        host = validate_onion_host(str(job["fqdn"]))
+        host = validate_capture_host(str(job["fqdn"]))
         await tor_socks_preflight(settings.tor_proxy)
         opsec_passed = True
         try:

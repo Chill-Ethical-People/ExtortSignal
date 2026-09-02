@@ -24,6 +24,30 @@ from .source_metadata import (
 )
 
 
+def operator_dls_catalog() -> list[DlsLocationInput]:
+    """Return reviewed operator-supplied targets without contacting them.
+
+    These entries supplement clear-web catalogue APIs. They are eligible for
+    the isolated capture worker but remain capture-disabled until an analyst
+    explicitly enables them in the Direct sites GUI.
+    """
+    return [
+        DlsLocationInput(
+            group_name="FulcrumSec",
+            description=(
+                "Operator-supplied public victim-list endpoint. Attribution and "
+                "availability have not been independently verified by ExtortSignal."
+            ),
+            fqdn="fulcrumsec.vg",
+            location_type="DLS",
+            title="FulcrumSec public victim list",
+            enabled=True,
+            available=True,
+            source="operator_static",
+        )
+    ]
+
+
 def parse_datetime(value: Any) -> datetime | None:
     if not value:
         return None
@@ -816,7 +840,11 @@ def reconcile_dls_catalogs(
         for location in catalogue:
             candidates.setdefault(location.fqdn, []).append(location)
 
-    source_priority = {"ransomware_live": 10, "ransomlook": 20}
+    source_priority = {
+        "ransomware_live": 10,
+        "ransomlook": 20,
+        "operator_static": 30,
+    }
     merged: list[DlsLocationInput] = []
     overlaps = 0
     identity_conflicts = 0
@@ -849,7 +877,7 @@ def reconcile_dls_catalogs(
         )
         ordered_sources = [
             source
-            for source in ("ransomware_live", "ransomlook")
+            for source in ("ransomware_live", "ransomlook", "operator_static")
             if any(entry.source == source for entry in entries)
         ]
         ordered_sources.extend(

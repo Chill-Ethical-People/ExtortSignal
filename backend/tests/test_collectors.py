@@ -10,6 +10,7 @@ from ransom_monitor.collectors import (
     RansomLookCollector,
     RansomwareLiveCollector,
     RansomwareLiveCatalogCollector,
+    operator_dls_catalog,
     parse_ransomware_live_detail,
     reconcile_dls_catalogs,
     record_description,
@@ -507,3 +508,14 @@ def test_dls_catalog_reconciliation_retains_cross_source_provenance():
         "identity_conflict_labels": [],
         "availability_conflicts": 1,
     }
+
+
+def test_operator_dls_catalog_adds_fulcrumsec_without_network_discovery():
+    locations = operator_dls_catalog()
+
+    assert len(locations) == 1
+    assert locations[0].group_name == "FulcrumSec"
+    assert locations[0].fqdn == "fulcrumsec.vg"
+    assert locations[0].source == "operator_static"
+    assert locations[0].enabled is True
+    assert locations[0].available is True
